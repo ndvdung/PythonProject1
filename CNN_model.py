@@ -19,12 +19,10 @@ print(device)
 
 # hyperpara declare
 BATCH_SIZE = 16
-
 LR = 0.001
-
 EPOCHS = 35
-
 IMAGE_SIZE = (231, 310)
+
 
 # generic transform
 transform = transforms.Compose(
@@ -35,9 +33,9 @@ transform = transforms.Compose(
     ]
 )
 
+
 # dataset declaration
 dataset = datasets.ImageFolder(root="cwt_images", transform=transform)
-
 print(dataset.classes)
 print(dataset.class_to_idx)
 
@@ -49,7 +47,6 @@ train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
 # dataloader
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-
 test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
 
@@ -136,9 +133,7 @@ def main():
 
     # create model
     model = CNN().to(device)
-
     print(model)
-
     summary(model, input_size=(1, 3, 231, 310))
 
     # loss
@@ -148,7 +143,6 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=LR)
 
     # training and testing
-
     # epoch
     def train_one_epoch(model, loader, criterion, optimizer, device):
         """
