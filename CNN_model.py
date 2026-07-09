@@ -39,14 +39,11 @@ transform = transforms.Compose(
 dataset = datasets.ImageFolder(root="cwt_images", transform=transform)
 
 print(dataset.classes)
-
 print(dataset.class_to_idx)
 
 # split
 train_size = int(0.8 * len(dataset))
-
 test_size = len(dataset) - train_size
-
 train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
 
