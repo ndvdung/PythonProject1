@@ -135,89 +135,53 @@ class CNN(nn.Module):
         return x
 
 
-# create model
-model = CNN().to(device)
+def main():
 
-print(model)
+    # create model
+    model = CNN().to(device)
 
-summary(model, input_size=(1, 3, 231, 310))
+    print(model)
 
-# loss
-criterion = nn.CrossEntropyLoss()
+    summary(model, input_size=(1, 3, 231, 310))
 
-# optimizer
-optimizer = optim.Adam(model.parameters(), lr=LR)
+    # loss
+    criterion = nn.CrossEntropyLoss()
 
+    # optimizer
+    optimizer = optim.Adam(model.parameters(), lr=LR)
 
-# training and testing
-# epoch
-def train_one_epoch(model, loader, criterion, optimizer, device):
-    """
-    Train one epoch
-    Return:
-        avg_loss: average training loss
-        avg_acc : average training accuracy
-    """
+    # training and testing
 
-    model.train()
+    # epoch
+    def train_one_epoch(model, loader, criterion, optimizer, device):
+        """
+        Train one epoch
+        Return:
+            avg_loss: average training loss
+            avg_acc : average training accuracy
+        """
 
-    total_loss = 0.0
-    correct = 0
-    total = 0
+        model.train()
 
-    for images, labels in loader:
-
-        images = images.to(device)
-        labels = labels.to(device)
-
-        # Forward
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-
-        # Backward
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-        # Statistics
-        total_loss += loss.item()
-
-        _, predicted = torch.max(outputs.data, 1)
-
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-    avg_loss = total_loss / len(loader)
-    avg_acc = correct / total
-
-    return avg_loss, avg_acc
-
-
-def evaluate(model, loader, criterion, device):
-    """
-    Evaluate one epoch
-    Return:
-        avg_loss
-        avg_acc
-    """
-
-    model.eval()
-
-    total_loss = 0.0
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
+        total_loss = 0.0
+        correct = 0
+        total = 0
 
         for images, labels in loader:
 
             images = images.to(device)
             labels = labels.to(device)
 
+            # Forward
             outputs = model(images)
-
             loss = criterion(outputs, labels)
 
+            # Backward
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            # Statistics
             total_loss += loss.item()
 
             _, predicted = torch.max(outputs.data, 1)
@@ -225,74 +189,112 @@ def evaluate(model, loader, criterion, device):
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
 
-    avg_loss = total_loss / len(loader)
-    avg_acc = correct / total
+        avg_loss = total_loss / len(loader)
+        avg_acc = correct / total
 
-    return avg_loss, avg_acc
+        return avg_loss, avg_acc
+
+    def evaluate(model, loader, criterion, device):
+        """
+        Evaluate one epoch
+        Return:
+            avg_loss
+            avg_acc
+        """
+
+        model.eval()
+
+        total_loss = 0.0
+        correct = 0
+        total = 0
+
+        with torch.no_grad():
+
+            for images, labels in loader:
+
+                images = images.to(device)
+                labels = labels.to(device)
+
+                outputs = model(images)
+
+                loss = criterion(outputs, labels)
+
+                total_loss += loss.item()
+
+                _, predicted = torch.max(outputs.data, 1)
+
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+
+        avg_loss = total_loss / len(loader)
+        avg_acc = correct / total
+
+        return avg_loss, avg_acc
+
+    train_loss_history = []
+    test_loss_history = []
+
+    train_acc_history = []
+    test_acc_history = []
+
+    for epoch in range(EPOCHS):
+
+        train_loss, train_acc = train_one_epoch(
+            model, train_loader, criterion, optimizer, device
+        )
+
+        test_loss, test_acc = evaluate(model, test_loader, criterion, device)
+
+        train_loss_history.append(train_loss)
+        test_loss_history.append(test_loss)
+
+        train_acc_history.append(train_acc)
+        test_acc_history.append(test_acc)
+
+        print(
+            f"Epoch [{epoch+1}/{EPOCHS}] "
+            f"Train Loss: {train_loss:.4f} "
+            f"Train Acc: {train_acc:.4f} "
+            f"Test Loss: {test_loss:.4f} "
+            f"Test Acc: {test_acc:.4f}"
+        )
+
+    # loss curve
+    plt.figure(figsize=(8, 5))
+
+    plt.plot(train_loss_history, label="Train")
+
+    plt.plot(test_loss_history, label="Test")
+
+    plt.xlabel("Epoch")
+
+    plt.ylabel("Loss")
+
+    plt.legend()
+
+    plt.savefig("Loss_3_dropoutFC1.png")
+    plt.show()
+
+    # accu curve
+    plt.figure(figsize=(8, 5))
+
+    plt.plot(train_acc_history, label="Train")
+
+    plt.plot(test_acc_history, label="Test")
+
+    plt.xlabel("Epoch")
+
+    plt.ylabel("Accuracy")
+
+    plt.legend()
+
+    plt.savefig("Accu_3_dropoutFC1.png")
+    plt.show()
+
+    torch.save(model.state_dict(), "cnn_model_3_dropout.pth")
+
+    print("Model saved successfully!")
 
 
-train_loss_history = []
-test_loss_history = []
-
-train_acc_history = []
-test_acc_history = []
-
-for epoch in range(EPOCHS):
-
-    train_loss, train_acc = train_one_epoch(
-        model, train_loader, criterion, optimizer, device
-    )
-
-    test_loss, test_acc = evaluate(model, test_loader, criterion, device)
-
-    train_loss_history.append(train_loss)
-    test_loss_history.append(test_loss)
-
-    train_acc_history.append(train_acc)
-    test_acc_history.append(test_acc)
-
-    print(
-        f"Epoch [{epoch+1}/{EPOCHS}] "
-        f"Train Loss: {train_loss:.4f} "
-        f"Train Acc: {train_acc:.4f} "
-        f"Test Loss: {test_loss:.4f} "
-        f"Test Acc: {test_acc:.4f}"
-    )
-
-# loss curve
-plt.figure(figsize=(8, 5))
-
-plt.plot(train_loss_history, label="Train")
-
-plt.plot(test_loss_history, label="Test")
-
-plt.xlabel("Epoch")
-
-plt.ylabel("Loss")
-
-plt.legend()
-
-plt.savefig("Loss_3_dropoutFC1.png")
-plt.show()
-
-
-# accu curve
-plt.figure(figsize=(8, 5))
-
-plt.plot(train_acc_history, label="Train")
-
-plt.plot(test_acc_history, label="Test")
-
-plt.xlabel("Epoch")
-
-plt.ylabel("Accuracy")
-
-plt.legend()
-
-plt.savefig("Accu_3_dropoutFC1.png")
-plt.show()
-
-
-torch.save(model.state_dict(), "cnn_model_3_dropout.pth")
-
-print("Model saved successfully!")
+if __name__ == "__main__":
+    main()
